@@ -43,7 +43,7 @@
           <input
             type="text"
             id="firstname"
-            value={firstname}
+            name={firstname}
             {{-- onChange={(e) => setFirstname(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -55,7 +55,7 @@
           <input
             type="text"
             id="surename"
-            value={surname}
+            name={surname}
             {{-- onChange={(e) => setSurname(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -67,7 +67,7 @@
           <input
             type="email"
             id="email"
-            value={email}
+            name={email}
             {{-- onChange={(e) => setEmail(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -79,7 +79,7 @@
           <input
             type="password"
             id="password"
-            value={password}
+            name={password}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
         </div>
@@ -100,7 +100,7 @@
           <input
             type="text"
             id="phoneNumber"
-            value={phoneNumber}
+            name={phoneNumber}
             {{-- onChange={(e) => setPhoneNumber(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -112,7 +112,7 @@
           <input
             type="date"
             id="dob"
-            value={dob}
+            name={dob}
             {{-- onChange={(e) => setDob(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -124,7 +124,7 @@
           <input
             type="text"
             id="address"
-            value={address}
+            name={address}
             {{-- onChange={(e) => setAddress(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -136,7 +136,7 @@
           <input
             type="text"
             id="nida"
-            value={nida}
+            name={nida}
             {{-- onChange={(e) => setNida(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -148,7 +148,7 @@
           <select
             name="gender"
             id="gender"
-            value={gender}
+            name={gender}
             {{-- onChange={(e) => setGender(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
             >
@@ -165,7 +165,7 @@
           <input
             type="text"
             id="occupation"
-            value={occupation}
+            name={occupation}
             {{-- onChange={(e) => setOccupation(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           />
@@ -178,7 +178,7 @@
           <select
             id="maritalStatus"
             name="maritalStatus"
-            value={maritalStatus}
+            name={maritalStatus}
             {{-- onChange={(e) => setMaritalStatus(e.target.value)} --}}
             class="w-full px-3 py-2 mt-1 text-gray-900 bg-white bg-opacity-25 border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-600 focus:border-transparent"
           >
