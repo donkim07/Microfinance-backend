@@ -6,11 +6,13 @@
         @vite('resources/css/app.css')
 
     </head>
+<body>
+
 
         <div class="flex h-screen items-center justify-center bg-gradient-to-r from-green-200 via-blue-200 to-purple-200">
     <div class="relative w-full max-w-sm sm:max-w-md p-14 bg-white bg-opacity-25 backdrop-blur-md rounded-lg shadow-lg">
       <div class="flex flex-col items-center">
-        {{-- <div class="flex items-center justify-center w-12 h-12 mb-4 bg-gradient-to-r from-purple-400 via-blue-300 to-green-500 rounded-full">
+        <div class="flex items-center justify-center w-12 h-12 mb-4 bg-gradient-to-r from-purple-400 via-blue-300 to-green-500 rounded-full">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -25,7 +27,7 @@
               d="M12 14l9-5-9-5-9 5zm0 7l7-4-7-4-7 4 7 4z"
             />
           </svg>
-        </div> --}}
+        </div>
         <h2 class="text-xl font-bold text-gray-800 mb-4">Sign Up</h2>
       </div>
       <form onSubmit={handleSubmit} class="flex flex-col gap-4">
@@ -229,3 +231,6 @@
       </div>
     </div>
   </div>
+
+
+</body>
