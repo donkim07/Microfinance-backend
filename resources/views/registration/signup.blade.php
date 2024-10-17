@@ -223,7 +223,7 @@
       </div>
       <div class="flex justify-center mt-4">
         <p class="text-sm text-gray-700">
-          Already have an account?{' '}
+          Already have an account?
           <a href="/login" class="text-purple-600 hover:underline">
             Login
           </a>
