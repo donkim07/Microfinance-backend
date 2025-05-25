@@ -27,3 +27,8 @@ Route::get('/login', function () {
 
 // Language switching
 Route::get('language/{locale}', [LanguageController::class, 'switchLanguage'])->name('language.switch');
+
+// Admin routes
+Route::prefix('admin')->middleware(['auth', 'role:super-admin'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+});
