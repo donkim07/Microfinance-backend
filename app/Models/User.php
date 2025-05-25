@@ -45,4 +45,68 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * The roles that belong to the user
+     */
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    /**
+     * Get the employee associated with the user
+     */
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
+
+    /**
+     * Check if the user has a specific role
+     */
+    public function hasRole($role)
+    {
+        if (is_string($role)) {
+            return $this->roles->contains('name', $role);
+        }
+
+        return !! $role->intersect($this->roles)->count();
+    }
+
+    /**
+     * Check if the user has any of the given roles
+     */
+    public function hasAnyRole($roles)
+    {
+        if (is_string($roles)) {
+            return $this->hasRole($roles);
+        }
+
+        foreach ($roles as $role) {
+            if ($this->hasRole($role)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if the user has all of the given roles
+     */
+    public function hasAllRoles($roles)
+    {
+        if (is_string($roles)) {
+            return $this->hasRole($roles);
+        }
+
+        foreach ($roles as $role) {
+            if (!$this->hasRole($role)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
