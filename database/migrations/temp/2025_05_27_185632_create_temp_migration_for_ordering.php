@@ -11,14 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('job_classes', function (Blueprint $table) {
+        Schema::create('temp_migration_for_ordering', function (Blueprint $table) {
             $table->id();
-            $table->string('job_class_code', 10)->unique();
-            $table->string('job_class_name', 255);
-            $table->text('description')->nullable();
-            $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -27,6 +22,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('job_classes');
+        Schema::dropIfExists('temp_migration_for_ordering');
     }
 };

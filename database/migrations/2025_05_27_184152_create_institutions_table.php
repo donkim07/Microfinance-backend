@@ -13,7 +13,16 @@ return new class extends Migration
     {
         Schema::create('institutions', function (Blueprint $table) {
             $table->id();
+            $table->string('vote_code', 10)->unique();
+            $table->string('vote_name', 255);
+            $table->string('address')->nullable();
+            $table->string('phone', 15)->nullable();
+            $table->string('email')->nullable();
+            $table->string('website')->nullable();
+            $table->string('logo')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

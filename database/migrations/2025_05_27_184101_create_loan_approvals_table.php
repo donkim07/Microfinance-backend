@@ -13,7 +13,15 @@ return new class extends Migration
     {
         Schema::create('loan_approvals', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('loan_application_id')->constrained()->onDelete('cascade');
+            $table->foreignId('approved_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->enum('approval_level', ['INITIAL', 'FINAL'])->default('INITIAL');
+            $table->enum('status', ['APPROVED', 'REJECTED'])->default('APPROVED');
+            $table->text('remarks')->nullable();
+            $table->string('fsp_reference_number', 20)->nullable();
+            $table->timestamp('approved_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

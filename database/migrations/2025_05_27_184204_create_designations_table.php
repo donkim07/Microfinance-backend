@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('designations', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('job_class_id')->nullable();
+            $table->string('designation_code', 10)->unique();
+            $table->string('designation_name', 255);
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

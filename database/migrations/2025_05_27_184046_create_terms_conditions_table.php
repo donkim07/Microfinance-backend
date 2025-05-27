@@ -13,6 +13,11 @@ return new class extends Migration
     {
         Schema::create('terms_conditions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('product_catalog_id')->constrained()->onDelete('cascade');
+            $table->string('terms_condition_number', 20);
+            $table->string('description', 255);
+            $table->date('tc_effective_date');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

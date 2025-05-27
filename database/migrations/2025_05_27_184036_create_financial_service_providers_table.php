@@ -13,6 +13,16 @@ return new class extends Migration
     {
         Schema::create('financial_service_providers', function (Blueprint $table) {
             $table->id();
+            $table->string('fsp_code', 10)->unique();
+            $table->string('name', 100);
+            $table->string('deduction_code', 10)->nullable();
+            $table->string('contact_person')->nullable();
+            $table->string('phone_number', 15)->nullable();
+            $table->string('email')->nullable();
+            $table->text('address')->nullable();
+            $table->string('website')->nullable();
+            $table->string('logo')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
