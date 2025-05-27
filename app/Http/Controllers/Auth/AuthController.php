@@ -122,24 +122,28 @@ class AuthController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'name' => $request->first_name . ' ' . $request->last_name,
-            'email' => $request->email,
-            'phone_number' => $request->phone_number,
-            'password' => Hash::make($request->password),
-        ]);
+        try {
+            $user = User::create([
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'name' => $request->first_name . ' ' . $request->last_name,
+                'email' => $request->email,
+                'phone_number' => $request->phone_number,
+                'password' => Hash::make($request->password),
+            ]);
 
-        // Assign default role to user (e.g., 'user')
-        $defaultRole = \App\Models\Role::where('slug', 'user')->first();
-        if ($defaultRole) {
-            $user->roles()->attach($defaultRole->id);
+            // Assign default role to user (e.g., 'user')
+            $defaultRole = \App\Models\Role::where('slug', 'user')->first();
+            if ($defaultRole) {
+                $user->roles()->attach($defaultRole->id);
+            }
+
+            Auth::login($user);
+
+            return redirect('/dashboard');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Registration failed: ' . $e->getMessage()])->withInput();
         }
-
-        Auth::login($user);
-
-        return redirect('/dashboard');
     }
 
     /**
