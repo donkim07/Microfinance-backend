@@ -31,16 +31,33 @@ class EmployeeController extends Controller
     /**
      * Display a listing of the employees.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $employees = User::with(['employeeDetail.institution', 'employeeDetail.department', 'employeeDetail.designation', 'roles'])
-            ->whereHas('employeeDetail')
-            ->orderBy('name')
-            ->paginate(15);
+        $query = User::query();
         
-        return view('employees.index', compact('employees'));
+        // Apply search filters
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('employee_id', 'like', "%{$search}%");
+            });
+        }
+        
+        if ($request->has('department')) {
+            $query->where('department', $request->department);
+        }
+        
+        if ($request->has('designation')) {
+            $query->where('designation', $request->designation);
+        }
+        
+        $employees = $query->paginate(10);
+        
+        return view('employee.index', compact('employees'));
     }
 
     /**
@@ -165,19 +182,14 @@ class EmployeeController extends Controller
      * Display the specified employee.
      *
      * @param  \App\Models\User  $employee
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\Response
      */
     public function show(User $employee)
     {
-        $employee->load(['employeeDetail.institution', 'employeeDetail.department', 'employeeDetail.designation', 'employeeDetail.jobClass', 'roles']);
+        // Load the employee's loans
+        $loans = $employee->loans()->latest()->get();
         
-        // Get employee loan history
-        $loans = $employee->loans()
-            ->with('productCatalog')
-            ->orderBy('created_at', 'desc')
-            ->get();
-        
-        return view('employees.show', compact('employee', 'loans'));
+        return view('employee.show', compact('employee', 'loans'));
     }
 
     /**

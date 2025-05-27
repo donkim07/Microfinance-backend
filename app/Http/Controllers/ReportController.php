@@ -10,6 +10,7 @@ use App\Models\LoanDefault;
 use App\Models\LoanRepayment;
 use App\Models\ProductCatalog;
 use App\Models\User;
+use App\Models\Report;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,22 +31,437 @@ class ReportController extends Controller
     }
 
     /**
-     * Display the report dashboard.
+     * Display a listing of the reports.
      *
-     * @return \Illuminate\View\View
+     * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        // Get loan statistics for the dashboard
-        $loanStats = $this->getLoanStatistics();
+        $loanProducts = ProductCatalog::orderBy('name')->get();
+        $recentReports = Report::with('user')->where('user_id', auth()->id())->latest()->take(5)->get();
         
-        // Get repayment statistics for the dashboard
-        $repaymentStats = $this->getRepaymentStatistics();
+        return view('reports.index', compact('loanProducts', 'recentReports'));
+    }
+
+    /**
+     * Display the loan summary report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function loanSummary(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
         
-        // Get default statistics for the dashboard
-        $defaultStats = $this->getDefaultStatistics();
+        // Get loan data
+        $loans = Loan::whereBetween('created_at', [$startDate, $endDate])->get();
         
-        return view('reports.index', compact('loanStats', 'repaymentStats', 'defaultStats'));
+        // Calculate summary data
+        $totalLoans = $loans->count();
+        $totalAmount = $loans->sum('amount');
+        $activeLoans = $loans->where('status', 'ACTIVE')->count();
+        $activeAmount = $loans->where('status', 'ACTIVE')->sum('amount');
+        $fullyPaidLoans = $loans->where('status', 'FULLY_PAID')->count();
+        $fullyPaidAmount = $loans->where('status', 'FULLY_PAID')->sum('amount');
+        $defaultedLoans = $loans->where('status', 'DEFAULTED')->count();
+        $defaultedAmount = $loans->where('status', 'DEFAULTED')->sum('amount');
+        
+        // Group by status
+        $loansByStatus = $loans->groupBy('status');
+        
+        return view('reports.loan-summary', compact(
+            'startDate', 'endDate', 'totalLoans', 'totalAmount', 'activeLoans', 
+            'activeAmount', 'fullyPaidLoans', 'fullyPaidAmount', 'defaultedLoans', 
+            'defaultedAmount', 'loansByStatus', 'loans'
+        ));
+    }
+
+    /**
+     * Display the loan disbursements report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function loanDisbursements(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get disbursed loans
+        $disbursedLoans = Loan::whereNotNull('disbursed_at')
+            ->whereBetween('disbursed_at', [$startDate, $endDate])
+            ->get();
+        
+        return view('reports.loan-disbursements', compact('startDate', 'endDate', 'disbursedLoans'));
+    }
+
+    /**
+     * Display the loan repayments report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function loanRepayments(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get repayments
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])
+            ->with('loan', 'loan.user')
+            ->get();
+        
+        return view('reports.loan-repayments', compact('startDate', 'endDate', 'repayments'));
+    }
+
+    /**
+     * Display the loan defaults report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function loanDefaults(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get defaulted loans
+        $defaultedLoans = Loan::where('status', 'DEFAULTED')
+            ->whereBetween('updated_at', [$startDate, $endDate])
+            ->with('user')
+            ->get();
+        
+        return view('reports.loan-defaults', compact('startDate', 'endDate', 'defaultedLoans'));
+    }
+
+    /**
+     * Display the loan aging report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function loanAging(Request $request)
+    {
+        // Get active loans
+        $activeLoans = Loan::where('status', 'ACTIVE')->with('user')->get();
+        
+        // Group by age
+        $current = $activeLoans->filter(function($loan) {
+            return $loan->days_overdue == 0;
+        });
+        
+        $overdue30 = $activeLoans->filter(function($loan) {
+            return $loan->days_overdue > 0 && $loan->days_overdue <= 30;
+        });
+        
+        $overdue60 = $activeLoans->filter(function($loan) {
+            return $loan->days_overdue > 30 && $loan->days_overdue <= 60;
+        });
+        
+        $overdue90 = $activeLoans->filter(function($loan) {
+            return $loan->days_overdue > 60 && $loan->days_overdue <= 90;
+        });
+        
+        $overdue90Plus = $activeLoans->filter(function($loan) {
+            return $loan->days_overdue > 90;
+        });
+        
+        return view('reports.loan-aging', compact(
+            'activeLoans', 'current', 'overdue30', 'overdue60', 'overdue90', 'overdue90Plus'
+        ));
+    }
+
+    /**
+     * Display the revenue report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function revenue(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get repayments
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])->get();
+        
+        // Calculate revenue
+        $totalRevenue = $repayments->sum('amount');
+        $principalRepayments = $repayments->sum('principal');
+        $interestIncome = $repayments->sum('interest');
+        $feesIncome = $repayments->sum('fees');
+        $penaltiesIncome = $repayments->sum('penalties');
+        
+        return view('reports.revenue', compact(
+            'startDate', 'endDate', 'repayments', 'totalRevenue', 'principalRepayments',
+            'interestIncome', 'feesIncome', 'penaltiesIncome'
+        ));
+    }
+
+    /**
+     * Generate custom report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function custom(Request $request)
+    {
+        $reportType = $request->input('report_type');
+        
+        if (!$reportType) {
+            return redirect()->route('reports.index');
+        }
+        
+        switch ($reportType) {
+            case 'loan_summary':
+                return $this->loanSummary($request);
+            case 'loan_repayments':
+                return $this->loanRepayments($request);
+            case 'loan_disbursements':
+                return $this->loanDisbursements($request);
+            case 'financial_summary':
+                return $this->financialSummary($request);
+            case 'employee_loans':
+                return $this->employeeLoans($request);
+            default:
+                return redirect()->route('reports.index');
+        }
+    }
+
+    /**
+     * Display the specified report.
+     *
+     * @param  \App\Models\Report  $report
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Report $report)
+    {
+        return view('reports.show', compact('report'));
+    }
+
+    /**
+     * Download the specified report.
+     *
+     * @param  \App\Models\Report  $report
+     * @return \Illuminate\Http\Response
+     */
+    public function download(Report $report)
+    {
+        // Handle report download logic
+        return response()->download(storage_path('app/reports/' . $report->file_path));
+    }
+
+    /**
+     * Display the employee loans report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function employeeLoans(Request $request)
+    {
+        $employeeId = $request->input('employee_id');
+        
+        if ($employeeId) {
+            $employee = User::findOrFail($employeeId);
+            $loans = $employee->loans()->with('product')->get();
+            
+            return view('reports.employee-loans', compact('employee', 'loans'));
+        }
+        
+        $employees = User::has('loans')->get();
+        
+        return view('reports.employee-loans', compact('employees'));
+    }
+
+    /**
+     * Display the interest income report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function interestIncome(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get repayments
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])->get();
+        
+        // Calculate interest income
+        $interestIncome = $repayments->sum('interest');
+        
+        return view('reports.interest-income', compact('startDate', 'endDate', 'repayments', 'interestIncome'));
+    }
+
+    /**
+     * Display the fees income report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function feesIncome(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get repayments
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])->get();
+        
+        // Calculate fees income
+        $feesIncome = $repayments->sum('fees');
+        $penaltiesIncome = $repayments->sum('penalties');
+        $totalFeesIncome = $feesIncome + $penaltiesIncome;
+        
+        return view('reports.fees-income', compact(
+            'startDate', 'endDate', 'repayments', 'feesIncome', 'penaltiesIncome', 'totalFeesIncome'
+        ));
+    }
+
+    /**
+     * Display the cash flow report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function cashFlow(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get disbursements
+        $disbursements = Loan::whereNotNull('disbursed_at')
+            ->whereBetween('disbursed_at', [$startDate, $endDate])
+            ->get();
+        
+        // Get repayments
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])->get();
+        
+        // Calculate cash flow
+        $totalDisbursements = $disbursements->sum('amount');
+        $totalRepayments = $repayments->sum('amount');
+        $netCashFlow = $totalRepayments - $totalDisbursements;
+        
+        return view('reports.cash-flow', compact(
+            'startDate', 'endDate', 'disbursements', 'repayments',
+            'totalDisbursements', 'totalRepayments', 'netCashFlow'
+        ));
+    }
+
+    /**
+     * Display the financial summary report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function financialSummary(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get all loans
+        $loans = Loan::all();
+        
+        // Get active loans
+        $activeLoans = $loans->where('status', 'ACTIVE');
+        
+        // Get disbursements in period
+        $disbursements = Loan::whereNotNull('disbursed_at')
+            ->whereBetween('disbursed_at', [$startDate, $endDate])
+            ->get();
+        
+        // Get repayments in period
+        $repayments = LoanRepayment::whereBetween('payment_date', [$startDate, $endDate])->get();
+        
+        // Calculate summary data
+        $totalLoanPortfolio = $activeLoans->sum('balance');
+        $totalDisbursements = $disbursements->sum('amount');
+        $totalRepayments = $repayments->sum('amount');
+        $interestIncome = $repayments->sum('interest');
+        $feesIncome = $repayments->sum('fees');
+        $penaltiesIncome = $repayments->sum('penalties');
+        $totalRevenue = $interestIncome + $feesIncome + $penaltiesIncome;
+        
+        return view('reports.financial-summary', compact(
+            'startDate', 'endDate', 'totalLoanPortfolio', 'totalDisbursements',
+            'totalRepayments', 'interestIncome', 'feesIncome', 'penaltiesIncome', 'totalRevenue'
+        ));
+    }
+
+    /**
+     * Display the department loans report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function departmentLoans(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get all loans in period
+        $loans = Loan::whereBetween('created_at', [$startDate, $endDate])
+            ->with('user')
+            ->get();
+        
+        // Group by department
+        $loansByDepartment = $loans->groupBy(function($loan) {
+            return $loan->user->department ?? 'Unknown';
+        });
+        
+        return view('reports.department-loans', compact('startDate', 'endDate', 'loansByDepartment'));
+    }
+
+    /**
+     * Display the user activity report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function userActivity(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // This would depend on your activity logging system
+        // For example purposes, we'll assume you have an Activity model
+        $activities = []; // Activity::whereBetween('created_at', [$startDate, $endDate])->with('user')->get();
+        
+        return view('reports.user-activity', compact('startDate', 'endDate', 'activities'));
+    }
+
+    /**
+     * Display the new registrations report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function newRegistrations(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // Get new users
+        $newUsers = User::whereBetween('created_at', [$startDate, $endDate])->get();
+        
+        return view('reports.new-registrations', compact('startDate', 'endDate', 'newUsers'));
+    }
+
+    /**
+     * Display the staff performance report.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function staffPerformance(Request $request)
+    {
+        $startDate = $request->input('start_date', Carbon::now()->subMonth()->format('Y-m-d'));
+        $endDate = $request->input('end_date', Carbon::now()->format('Y-m-d'));
+        
+        // This would depend on your staff performance metrics
+        // For example purposes, we'll just show an empty view
+        
+        return view('reports.staff-performance', compact('startDate', 'endDate'));
     }
 
     /**

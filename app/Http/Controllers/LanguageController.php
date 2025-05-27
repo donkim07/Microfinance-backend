@@ -106,22 +106,21 @@ class LanguageController extends Controller
      * Change the application language.
      *
      * @param  string  $locale
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function changeLanguage($locale)
     {
+        // Check if the locale is supported
         if (!in_array($locale, ['en', 'sw'])) {
-            abort(400, 'Invalid locale');
+            $locale = 'en'; // Default to English if unsupported
         }
-
-        Session::put('locale', $locale);
+        
+        // Set the application locale
         App::setLocale($locale);
         
-        // Update user preference if authenticated
-        if (auth()->check()) {
-            auth()->user()->update(['preferred_language' => $locale]);
-        }
-
+        // Store the locale in the session
+        Session::put('locale', $locale);
+        
         return redirect()->back();
     }
 }
