@@ -14,6 +14,13 @@ return [
     |
     */
 
+    'mailgun' => [
+        'domain' => env('MAILGUN_DOMAIN'),
+        'secret' => env('MAILGUN_SECRET'),
+        'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+        'scheme' => 'https',
+    ],
+
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -33,6 +40,14 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'ess_utumishi' => [
+        'api_key' => env('ESS_UTUMISHI_API_KEY'),
+        'base_url' => env('ESS_UTUMISHI_BASE_URL', 'https://api.essutumishi.go.tz'),
+        'timeout' => env('ESS_UTUMISHI_TIMEOUT', 30),
+        'retry_attempts' => env('ESS_UTUMISHI_RETRY_ATTEMPTS', 3),
+        'retry_delay' => env('ESS_UTUMISHI_RETRY_DELAY', 1),
     ],
 
 ];
