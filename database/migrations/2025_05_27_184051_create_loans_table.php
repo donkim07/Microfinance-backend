@@ -28,6 +28,7 @@ return new class extends Migration
             $table->decimal('other_charges', 15, 2)->nullable();
             $table->decimal('total_amount_to_pay', 15, 2);
             $table->decimal('balance', 15, 2);
+            $table->decimal('outstanding_amount', 15, 2)->default(0);
             $table->integer('tenure');
             $table->string('fsp_reference_number', 20)->nullable();
             $table->string('deduction_code', 10)->nullable();
